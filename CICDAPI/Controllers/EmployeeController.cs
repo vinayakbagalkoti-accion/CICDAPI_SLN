@@ -7,16 +7,27 @@ using System.Web.Http;
 
 namespace CICDAPI.Controllers
 {
+    public class Language
+    {
+        public int? Id { get; set; }
+
+        public string Name { get; set; }
+    }
+
     public class LanguageController : ApiController
     {
 
-        static List<string> languages = new List<string>() {
-            "C#","ASP.NET","MVC"
+        static List<Language> languages = new List<Language>() { 
+
+            new Language(){ Id= 1, Name ="C#"},
+            new Language(){ Id= 2, Name ="Java"},
+            new Language(){ Id= 3, Name ="Python"},
+            new Language(){ Id= 4, Name ="Angular"}
         };
 
         // GET: api/Language
         // GET api/values  
-        public IEnumerable<string> Get()
+        public IEnumerable<Language> Get()
         {
             return languages;
         }
@@ -27,13 +38,23 @@ namespace CICDAPI.Controllers
         {
             try
             {
-                return Ok(languages[id]);
+
+                Language language = languages.FirstOrDefault(l => l.Id == id);
+
+                if (language != null)
+                {
+                  return Ok(language);
+                }
+
+               
             }
             catch
             {
                 return StatusCode(HttpStatusCode.InternalServerError);
             }
-                       
+
+            return StatusCode(HttpStatusCode.NotFound);
+
         }
 
         // POST: api/Language
@@ -41,14 +62,22 @@ namespace CICDAPI.Controllers
         {
             try
             {
-                languages.Add(value);
+                if (!string.IsNullOrEmpty(value))
+                {
+                    int? intIdt = languages.Max(u => (int?)u.Id);
+
+                    languages.Add(new Language() { Id = intIdt + 1, Name = value });
+
+                    return Content(HttpStatusCode.Created, value + " added successfully at index " + (intIdt + 1));
+                   
+                }
             }
             catch 
             {
                 return StatusCode(HttpStatusCode.InternalServerError);
             }
 
-            return Ok("Record Added successfully");
+            return StatusCode(HttpStatusCode.BadRequest);
 
         }
 
@@ -57,14 +86,24 @@ namespace CICDAPI.Controllers
         {
             try
             {
-                languages[id] = value;
+                Language language = languages.FirstOrDefault(l => l.Id == id);
+
+                if (language != null)
+                {
+                    foreach (var l in languages.Where(w => w.Id == id))
+                    {
+                        l.Name = value;
+                    }
+                    return Content(HttpStatusCode.Created, value + " updated successfully at index " + id);
+                }
             }
             catch 
             {
                 return StatusCode(HttpStatusCode.InternalServerError);
             }
 
-            return Ok("Record updated successfully");
+            return StatusCode(HttpStatusCode.NotFound);
+        
         }
 
         // DELETE: api/Language/5
@@ -72,14 +111,22 @@ namespace CICDAPI.Controllers
         {
             try
             {
-                languages.RemoveAt(id);
+                Language language = languages.FirstOrDefault(l => l.Id == id);
+
+                if (language != null)
+                {
+                    languages.Remove(language);
+
+                    return Content(HttpStatusCode.Accepted, language.Name + " deleted successfully at index " + id);
+                }
             }
             catch
             {
                 return StatusCode(HttpStatusCode.InternalServerError);
             }
 
-            return Ok("Record deleted successfully");
+            return StatusCode(HttpStatusCode.NotFound);
+
         }
     }
 }
